@@ -1,12 +1,23 @@
 CC = gcc
 ODIR = objs
-  
+SDIR = src
+
 LIBS = -lm
 #debugging flags
 CFLAGS = -g -Wall -Wextra -pedantic -MMD -MP
 
-main.exe: $(ODIR)/fxlib.o
-	$(CC) -LIBS -o $@ $^
+SRCS = $(wildcard $(SDIR)/*.c)
+#pattern substituation: (pattern, replacement, text)
+OBJS = $(patsubst $(SDIR)/%.c, $(ODIR)/%.o, $(SRCS))
 
-$(ODIR)/fxlib.o: fxlib.c
+main.exe: $(OBJS)
+	$(CC) $(LIBS) -o $@ $^
+
+-include $(OBJS:.o=.d) #makes it so when headers are updated, recompile
+
+$(ODIR)/%.o: $(SDIR)/%.c
 	$(CC) -c $(CFLAGS) -o $@ $<
+
+clean:
+	rm -f $(ODIR)/*.o $(ODIR)/*.d
+
