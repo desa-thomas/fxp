@@ -141,7 +141,11 @@ char* peek(Stack* stack)
 
 int infix_to_postfix(char* expr, char* postfix, int buffersize)
 {
-    //make mutable copy of expr
+    /*
+    make mutable copy of expr 
+    This was done to make it easy to detect implicit multiplication e.g., 5(x+9)
+    by adding '5' to the postfix expression, replacing it with '*' and skipping the iteration
+    */
     char* local_expr;
     local_expr = malloc(sizeof(expr) + 1); 
     if(local_expr == NULL)
@@ -156,16 +160,15 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
     }
     strncpy(local_expr, expr, strlen(expr)); 
 
-
-    int errcode = 0; //0 : success, -999 : error
-    strcpy(postfix,""); //make sure passed output string empty
+    /* variable setup*/
+    int errcode = 0;                //0 : success, -999 : error
+    strcpy(postfix,"");   //make sure passed output string empty
     Stack* stack = create_stack(); 
 
-    char currStr [50]; 
+    char currStr [50];              //holds parsed number or funciton e.g., "900" or "sin" 
     int currstrlen = 0; 
-    char errmsg [100];
-    int (*check_char)(int) = NULL; // A function pointer!!! will point to isalpha or isdigit
-    Bool isFunc; 
+    int (*check_char)(int) = NULL;  //A function pointer!!! will point to isalpha or isdigit
+    Bool isFunc;                    //True if the current parsed string is a function operator (sin, cos...etc)
 
     char ch;
     int i= 0; 
@@ -193,8 +196,7 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
                 //handle str overflow
                 if (currstrlen == 50)
                     {
-                        sprintf(errmsg, "str too long (greater than 50 chars): %s\n", currStr); 
-                        printf("ERROR: %s", errmsg); 
+                        printf("ERROR: operator invalid (overflow over 50 char): %s\n", currStr); 
                         errcode = -999; 
                         break;
                     }
@@ -236,7 +238,7 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
             //else pop all operators from stack that have higher or equal precedence 
             else
             {
-                //Note, we always push if encoutering a function (i.e., sin) so ch is 100% an operator
+                //Note, we always push if encoutering a function (i.e., sin) so ch is 100% a char operator
                 //pop all values of stack with higher precedence
                 while((stack->top != NULL) && ( ( (isOperator(peekval[0])) && (cmpopr(peekval[0], ch) >=0) ) || (isStrOpr(peekval)) ) ) 
                 {
@@ -271,18 +273,20 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
         //If it is an operand 
         else if(isdigit(currStr[0]) || isalpha(currStr[0]))
         {
+            //make sure it is a valid function operator 
             if (isalpha(currStr[0]) && isalpha(currStr[1]) && !isStrOpr(currStr))
             {
                 printf("ERROR: \"%s\" is not a valid operator\n", currStr); 
                 errcode = -999; 
             }
 
+            //add operand to postfix expression
             else if(!CONCAT_OVERFLOW(postfix, currStr, buffersize))
                 {
                 strncat(postfix, currStr, strlen(currStr));
                 strncat(postfix, " ", 2); 
 
-                //case: 5(x) => 5*(x)
+                //detect implicit multiplication i.e., 5(x) => 5*(x), 4sin(x) => 4*sin(x)
                 if(isdigit(currStr[0]) && (local_expr[i+1] == '(' || isalpha(local_expr[i+1])))
                     {
                         local_expr[i] = '*'; 
@@ -296,6 +300,7 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
         //If it is a bracket
         else if (isBracket(ch))
         {
+            //push open bracket
             if (ch == '(' || ch == '[')
                 {
                     char tmp[2];
@@ -334,10 +339,11 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
                         break;
                     }
                 
-                char* val = pop(stack); //discard bracket
+                //discard bracket
+                char* val = pop(stack); 
                 free(val); 
 
-                //ex: sin ( expr )
+                //detect function operator before bracket ex: sin ( expr ) 
                 if(isStrOpr(peek(stack)))
                 {
                     char * opr = pop(stack); 
@@ -364,7 +370,7 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
             continue;
         }
 
-        //err
+        //err invalid character
         else 
         {
             printf("ERROR: Invalid character: %c\n", ch); 
@@ -372,7 +378,6 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
             break; 
         }
         
-        printstack(stack); 
         i++; 
     }
 
