@@ -56,17 +56,32 @@ Stack methods
 
 Stack* create_stack();
 sNODE* create_sNode(char* val);
+void free_node(sNODE*); 
 void freeStack(Stack* stack);   //free all pointers
-void push(Stack*, char* val); 
+void push(Stack* stack, char* val); 
+
+/*
+returns val stored in top node 
+NOTE: call free(val) when done using popped value
+*/
 char* pop(Stack* stack); 
 char* peek(Stack* stack);
 //debugging:
 void printstack(Stack* stack); 
 
 /* convert infix string expr to postfix expression using stack */
-char* infix_to_postfix(char* expr); 
-/*Is string operator i.e., log, cos, sin, sqrt ...*/
+int infix_to_postfix(char* expr, char* postfix, int buffersize); 
+#define CONCAT_OVERFLOW(s1, s2, buffer) (strlen(s1) + strlen(s2) > (size_t)buffer)
+
+/*Is a string operator i.e., log, cos, sin, sqrt ...*/
 Bool isStrOpr(char* expr); 
+/* 
+Compare oper1 to opr2:
+-1 lower precedence
+0  equal precedence
+1  higher precedence
+*/
+int cmpopr(char opr1, char opr2);
 
 
 /* 
