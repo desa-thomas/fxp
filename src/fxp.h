@@ -71,7 +71,7 @@ void printstack(Stack* stack);
 
 /* convert infix string expr to postfix expression using stack */
 int infix_to_postfix(char* expr, char* postfix, int buffersize); 
-#define CONCAT_OVERFLOW(s1, s2, buffer) (strlen(s1) + strlen(s2) > (size_t)buffer)
+#define CONCAT_OVERFLOW(s1, s2, buffer) (strlen(s1) + strlen(s2) +1 > (size_t)buffer)
 
 /*Is a string operator i.e., log, cos, sin, sqrt ...*/
 Bool isStrOpr(char* expr); 
