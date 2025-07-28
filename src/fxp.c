@@ -244,7 +244,10 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
                     //add popped operator to postfix expression
 
                     if (!CONCAT_OVERFLOW(postfix, opr, buffersize))
-                        strncat(postfix, opr, strlen(opr)); 
+                        {
+                            strncat(postfix, opr, strlen(opr)); 
+                            strncat(postfix, " ", 2); 
+                        }
                     else
                         {
                             errcode = -999;
@@ -262,9 +265,16 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
         //If it is an operand 
         else if(isdigit(currStr[0]) || isalpha(currStr[0]))
         {
-            if(!CONCAT_OVERFLOW(postfix, currStr, buffersize))
+            if (isalpha(currStr[0]) && isalpha(currStr[1]) && !isStrOpr(currStr))
+            {
+                printf("ERROR: \"%s\" is not a valid operator", currStr); 
+                errcode = -999; 
+            }
+
+            else if(!CONCAT_OVERFLOW(postfix, currStr, buffersize))
                 {
                 strncat(postfix, currStr, strlen(currStr));
+                strncat(postfix, " ", 2); 
 
                 //case: 5(x) => 5*(x)
                 if(isdigit(currStr[0]) && (local_expr[i+1] == '(' || isalpha(local_expr[i+1])))
@@ -296,7 +306,10 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
                     char* opr = pop(stack); 
                     
                     if(!CONCAT_OVERFLOW(postfix, opr, buffersize))
-                        strncat(postfix, opr, strlen(opr)); 
+                        {
+                            strncat(postfix, opr, strlen(opr)); 
+                            strncat(postfix, " ", 2); 
+                        }
                     else
                     {
                         errcode = -999; 
@@ -323,7 +336,10 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
                 {
                     char * opr = pop(stack); 
                     if(!CONCAT_OVERFLOW(postfix, opr, buffersize))
-                        strncat(postfix, opr, strlen(opr)); 
+                        {
+                            strncat(postfix, opr, strlen(opr));
+                            strncat(postfix, " ", 2); 
+                        }
                     else
                         {
                             errcode = -999;
@@ -363,12 +379,18 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
                 free(opr); 
                 break;
             }
-        
-        strncat(postfix, opr, strlen(opr)); 
+        if(!CONCAT_OVERFLOW(postfix, opr, buffersize))
+        {
+            strncat(postfix, opr, strlen(opr)); 
+            strncat(postfix, " ", 2); 
+        }
         free(opr); 
     }
 
     freeStack(stack); 
+
+    if(errcode == -999)
+        strcpy(postfix, ""); 
 
     return errcode; 
 }
