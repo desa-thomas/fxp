@@ -1,1 +1,1 @@
-C math function parser/ library. Built for [ASCIIplot](github.com/desa-thomas/ASCIIPlot)
+C math expression parser/ library. Built for [ASCIIplot](github.com/desa-thomas/ASCIIPlot)
