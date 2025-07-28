@@ -157,7 +157,7 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
     strncpy(local_expr, expr, strlen(expr)); 
 
 
-    int errcode = 1; //1 : success, -999 : error
+    int errcode = 0; //0 : success, -999 : error
     strcpy(postfix,""); //make sure passed output string empty
     Stack* stack = create_stack(); 
 
@@ -170,7 +170,7 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
     char ch;
     int i= 0; 
     int len = (int) strlen(local_expr);  
-    while(i < len && errcode)
+    while(i < len && !errcode)
     {
         ch = local_expr[i]; 
         isFunc = False; 
@@ -236,9 +236,9 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
             //else pop all operators from stack that have higher or equal precedence 
             else
             {
-                //Note, we always push if encoutering a function (i.e., sin)
+                //Note, we always push if encoutering a function (i.e., sin) so ch is 100% an operator
                 //pop all values of stack with higher precedence
-                while((stack->top != NULL) && (isOperator(peekval[0])) && (cmpopr(peekval[0], ch) >=0) )
+                while((stack->top != NULL) && ( ( (isOperator(peekval[0])) && (cmpopr(peekval[0], ch) >=0) ) || (isStrOpr(peekval)) ) ) 
                 {
                     char* opr = pop(stack); 
                     //add popped operator to postfix expression
@@ -259,6 +259,12 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
 
                     peekval = peek(stack); 
                 }
+
+                //once done popping all operators with higher precedence, push current operator
+                char tmp[2];
+                tmp[0] = ch; 
+                tmp[1] = STREND; 
+                push(stack, tmp); 
             }
         }
 
@@ -267,7 +273,7 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
         {
             if (isalpha(currStr[0]) && isalpha(currStr[1]) && !isStrOpr(currStr))
             {
-                printf("ERROR: \"%s\" is not a valid operator", currStr); 
+                printf("ERROR: \"%s\" is not a valid operator\n", currStr); 
                 errcode = -999; 
             }
 
@@ -361,14 +367,16 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
         //err
         else 
         {
-            sprintf(errmsg, "Invalid Character: %c", ch); 
-            printf("ERROR: %s", errmsg); 
+            printf("ERROR: Invalid character: %c\n", ch); 
+            errcode = -999;
+            break; 
         }
- 
+        
+        printstack(stack); 
         i++; 
     }
 
-    while (errcode && stack->top != NULL)
+    while (!errcode && stack->top != NULL)
     {
         char* opr = pop(stack);
 
@@ -390,7 +398,7 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
     freeStack(stack); 
 
     if(errcode == -999)
-        strcpy(postfix, ""); 
+        postfix = NULL; 
 
     return errcode; 
 }
