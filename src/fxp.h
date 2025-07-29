@@ -20,19 +20,23 @@ MACROS
 /* 
 Structs 
 */
-//type of node value
+
+//type of data that a node contains in `val`
 typedef enum{
-    NODE_TYPE, 
-    STRING_TYPE
+    NODE_TYPE,  //Node contains another node
+    STRING_TYPE //Node contains a string
 }node_datatype;
 
 /*
-NODE is used with the Stack struct for stacks with string contents:
-infix_to_postfix
+Multi purpose node
 */
 typedef struct{
+    
     void* next;
     void* val;
+
+    void* lChild; 
+    void* rChild;
 }NODE;
 
 typedef struct
@@ -41,14 +45,6 @@ typedef struct
     int len;
     node_datatype type; 
 }Stack;
-
-/* expression tree data structure*/
-typedef struct
-{
-    void* lChild;
-    void* rChild; 
-    char* val; 
-}tNODE;  
 
 typedef enum
 {False, True}Bool; 
@@ -110,8 +106,8 @@ EXPRESSION TREE METHODS
 */
 
 /* Create a tree node*/
-tNODE* create_tNode(char* val); 
+NODE* create_NODE(char* val); 
 /* Free all memory allocated by the expression tree */
-void freeTree(tNODE* root);     
+void freeTree(NODE* root);     
 /* Create expression tree from postfix string */
-tNODE* create_expression_tree(char* postfix);
+NODE* create_expression_tree(char* postfix);

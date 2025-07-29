@@ -6,24 +6,8 @@
 
 
 /*----EXPRESSION TREE DATA STRUCTURE----*/
-tNODE* create_tNode(char* val)
-{
 
-    /* Malloc node and node->val */
-    tNODE* node = malloc(sizeof(tNODE));
-    if(node == NULL) return NULL; 
-    char* new_val = malloc(strlen(val));
-    if(new_val == NULL) return NULL; 
-    strcpy(new_val, val); 
-
-    node->lChild = NULL; 
-    node->rChild = NULL; 
-    node->val = new_val; 
-
-    return node; 
-}
-
-void freeTree(tNODE *root)
+void freeTree(NODE *root)
 {
     if(root->lChild)
         freeTree(root->lChild); 
@@ -34,9 +18,8 @@ void freeTree(tNODE *root)
     free(root);
 }
 
-tNODE* create_expression_tree(char *postfix)
+NODE* create_expression_tree(char *postfix)
 {
-    //TODO implement general stack 
     //create stack
     //iterate over postfix expression
     //create node for current element
@@ -44,10 +27,14 @@ tNODE* create_expression_tree(char *postfix)
     //if element is an operator: pop() = right_child, pop() = left_child. push current node
     //return root
 
+    Stack* stack = create_stack(NODE_TYPE); 
+
     return NULL; 
 }
 
-/*----STACK DATA STRUCTURE ---*/
+/*
+---- NODE ----
+*/
 
 NODE* create_node(void* val, node_datatype type)
 { 
@@ -56,7 +43,7 @@ NODE* create_node(void* val, node_datatype type)
 
     if(type == STRING_TYPE)
     {
-        /* copy value into malloced memory locaiton*/
+        /* copy string into malloced memory locaiton*/
         char* new_val = malloc(strlen(val) + 1); 
         if(new_val == NULL) {free(node); return NULL; }
         strcpy(new_val, val); 
@@ -64,7 +51,10 @@ NODE* create_node(void* val, node_datatype type)
     }
     else
         node->val = val;
+        
     node->next = NULL; 
+    node->lChild = NULL; 
+    node->rChild = NULL; 
     
     return node; 
  }
@@ -74,7 +64,11 @@ void free_node(NODE * node)
     free(node->val);
     free(node); 
 }
- 
+
+/*
+----STACK DATA STRUCTURE ---
+*/
+
 Stack* create_stack(node_datatype type)
 {
     Stack *stack = malloc(sizeof(Stack));
@@ -173,7 +167,7 @@ void* peek(Stack* stack)
     return val; 
 }
 
-/* INFIX TO POSTFIX FUNCTIONS */
+/* ---- INFIX TO POSTFIX FUNCTIONS ----*/
 int infix_to_postfix(char* expr, char* postfix, int buffersize)
 {
     /*
