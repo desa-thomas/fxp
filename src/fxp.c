@@ -8,10 +8,17 @@
 /*----EXPRESSION TREE DATA STRUCTURE----*/
 tNODE* create_tNode(char* val)
 {
+
+    /* Malloc node and node->val */
     tNODE* node = malloc(sizeof(tNODE));
+    if(node == NULL) return NULL; 
+    char* new_val = malloc(strlen(val));
+    if(new_val == NULL) return NULL; 
+    strcpy(new_val, val); 
+
     node->lChild = NULL; 
     node->rChild = NULL; 
-    node->val = val; 
+    node->val = new_val; 
 
     return node; 
 }
@@ -23,42 +30,65 @@ void freeTree(tNODE *root)
     if(root->rChild)
         freeTree(root->rChild);
     
+    free(root->val); 
     free(root);
 }
 
-/*----SIMPLE STACK DATA STRUCTURE---*/
-sNODE* create_sNode(char* val)
-{ 
-    sNODE* node = malloc(sizeof(sNODE));
-    if(node == NULL) return NULL; 
-    char* new_val = malloc(strlen(val) + 1); 
-    if(new_val == NULL) {free(node); return NULL; }
-    strcpy(new_val, val); 
+tNODE* create_expression_tree(char *postfix)
+{
+    //TODO implement general stack 
+    //create stack
+    //iterate over postfix expression
+    //create node for current element
+    //if element is an operand push node to stack
+    //if element is an operator: pop() = right_child, pop() = left_child. push current node
+    //return root
 
+    return NULL; 
+}
+
+/*----STACK DATA STRUCTURE ---*/
+
+NODE* create_node(void* val, node_datatype type)
+{ 
+    NODE* node = malloc(sizeof(NODE));
+    if(node == NULL) return NULL; 
+
+    if(type == STRING_TYPE)
+    {
+        /* copy value into malloced memory locaiton*/
+        char* new_val = malloc(strlen(val) + 1); 
+        if(new_val == NULL) {free(node); return NULL; }
+        strcpy(new_val, val); 
+        node->val = new_val; 
+    }
+    else
+        node->val = val;
     node->next = NULL; 
-    node->val = new_val;
+    
     return node; 
  }
 
-void free_node(sNODE * node)
+void free_node(NODE * node)
 {
     free(node->val);
     free(node); 
 }
  
-Stack* create_stack()
+Stack* create_stack(node_datatype type)
 {
     Stack *stack = malloc(sizeof(Stack));
     stack->top = NULL; 
     stack->len = 0; 
+    stack->type = type; 
 
     return stack;
 }
 
 void freeStack(Stack *stack)
 {
-    sNODE* node = stack->top; 
-    sNODE* pnode = NULL; 
+    NODE* node = stack->top; 
+    NODE* pnode = NULL; 
 
     while(node)
     {
@@ -74,11 +104,14 @@ void freeStack(Stack *stack)
 //debug
 void printstack(Stack* stack)
 {
-    sNODE* node = stack->top;
+    if (stack->type != STRING_TYPE)
+        return; 
+
+    NODE* node = stack->top;
     int i = 0;
     while(node)
     {
-        printf("%d -> %s\n", i, node->val); 
+        printf("%d -> %s\n", i, (char*)node->val); 
         node = node->next;
         i++; 
     }
@@ -86,7 +119,7 @@ void printstack(Stack* stack)
 
 void push(Stack* stack,char* val)
 {
-    sNODE* node = create_sNode(val);
+    NODE* node = create_node(val, stack->type);
 
     //check if NOT empty
     if(stack->top)
@@ -100,10 +133,11 @@ void push(Stack* stack,char* val)
 }
 
 
-char* pop(Stack* stack)
+void* pop(Stack* stack)
 {
-    char* val; 
-    sNODE* node; 
+
+    void* val; 
+    NODE* node; 
 
     if(stack->top)
     {
@@ -124,9 +158,9 @@ char* pop(Stack* stack)
     return val; 
 }
 
-char* peek(Stack* stack)
+void* peek(Stack* stack)
 {
-    char* val; 
+    void* val; 
     if (stack->top)
     {
         val = stack->top->val; 
@@ -139,6 +173,7 @@ char* peek(Stack* stack)
     return val; 
 }
 
+/* INFIX TO POSTFIX FUNCTIONS */
 int infix_to_postfix(char* expr, char* postfix, int buffersize)
 {
     /*
@@ -163,7 +198,7 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
     /* variable setup*/
     int errcode = 0;                //0 : success, -999 : error
     strcpy(postfix,"");   //make sure passed output string empty
-    Stack* stack = create_stack(); 
+    Stack* stack = create_stack(STRING_TYPE); 
 
     char currStr [50];              //holds parsed number or funciton e.g., "900" or "sin" 
     int currstrlen = 0; 
@@ -312,7 +347,7 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
             else 
             {
                 //pop and output until '(' is encountered
-                while(stack->top != NULL && peek(stack)[0] != '(')
+                while(stack->top != NULL && ((char*)peek(stack))[0] != '(')
                 {                    
                     char* opr = pop(stack); 
                     
@@ -401,6 +436,7 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
     }
 
     freeStack(stack); 
+    free(local_expr); 
 
     if(errcode == -999)
         postfix = NULL; 

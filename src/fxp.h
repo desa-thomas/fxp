@@ -20,17 +20,29 @@ MACROS
 /* 
 Structs 
 */
+//type of node value
+typedef enum{
+    NODE_TYPE, 
+    STRING_TYPE
+}node_datatype;
+
+/*
+NODE is used with the Stack struct for stacks with string contents:
+infix_to_postfix
+*/
 typedef struct{
     void* next;
-    char* val;
-}sNODE;
+    void* val;
+}NODE;
 
 typedef struct
 {
-    sNODE* top;
+    NODE* top;
     int len;
+    node_datatype type; 
 }Stack;
 
+/* expression tree data structure*/
 typedef struct
 {
     void* lChild;
@@ -51,12 +63,14 @@ typedef struct
 }fox; // for f(x) or f o x 
 
 /* 
-Stack methods
-*/
 
-Stack* create_stack();
-sNODE* create_sNode(char* val);
-void free_node(sNODE*); 
+STRING STACK METHODS
+
+*/
+Stack* create_stack(node_datatype type);
+NODE* create_node(void* val, node_datatype datatype);
+
+void free_node(NODE*); 
 void freeStack(Stack* stack);   //free all pointers
 void push(Stack* stack, char* val); 
 
@@ -64,8 +78,8 @@ void push(Stack* stack, char* val);
 returns val stored in top node 
 NOTE: call free(val) when done using popped value
 */
-char* pop(Stack* stack); 
-char* peek(Stack* stack);
+void* pop(Stack* stack); 
+void* peek(Stack* stack);
 //debugging:
 void printstack(Stack* stack); 
 
@@ -73,19 +87,31 @@ void printstack(Stack* stack);
 int infix_to_postfix(char* expr, char* postfix, int buffersize); 
 #define CONCAT_OVERFLOW(s1, s2, buffer) (strlen(s1) + strlen(s2) +1 > (size_t)buffer)
 
-/*Is a string operator i.e., log, cos, sin, sqrt ...*/
+/*
+Checks if a string is a function identifier i.e., log, cos, sin, sqrt ...
+as oposed to an operator represented by a char, like '+', '-', '*', '-' ...
+
+The reason for the name is because "log", etc, and be thought of a "string operators"
+and '-', '+', etc as "character operators" in the context of the infix to postfix conversion algorithm
+*/
 Bool isStrOpr(char* expr); 
 /* 
-Compare oper1 to opr2:
+Compare char operators oper1 and opr2 by precedence
 -1 lower precedence
 0  equal precedence
 1  higher precedence
 */
-int cmpopr(char opr1, char opr2);
-
+int cmpopr(char opr1, char opr2); 
 
 /* 
-expression tree methods 
+|
+EXPRESSION TREE METHODS 
+
 */
+
+/* Create a tree node*/
 tNODE* create_tNode(char* val); 
-void freeTree(tNODE* root);     //free all pointers
+/* Free all memory allocated by the expression tree */
+void freeTree(tNODE* root);     
+/* Create expression tree from postfix string */
+tNODE* create_expression_tree(char* postfix);
