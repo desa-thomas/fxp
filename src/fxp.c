@@ -9,9 +9,9 @@
 
 void freeTree(NODE *root)
 {
-    if(root->lChild)
+    if(root->lChild != NULL)
         freeTree(root->lChild); 
-    if(root->rChild)
+    if(root->rChild != NULL)
         freeTree(root->rChild);
     
     free(root->val); 
@@ -20,16 +20,72 @@ void freeTree(NODE *root)
 
 NODE* create_expression_tree(char *postfix)
 {
-    //create stack
-    //iterate over postfix expression
-    //create node for current element
-    //if element is an operand push node to stack
-    //if element is an operator: pop() = right_child, pop() = left_child. push current node
-    //return root
 
     Stack* stack = create_stack(NODE_TYPE); 
+    char* token = strtok(postfix, " ");
 
-    return NULL; 
+    //iterate over postfix expression
+    while(token != NULL)
+    {
+
+        //create node for current element
+        NODE* node = create_node(token, STRING_TYPE); 
+
+        //if element is an operator: pop() = right_child, pop() = left_child. push current node
+        Bool isFunc = isStrOpr(token); 
+        if(isFunc || isOperator(token[0]))
+        {
+            if(peek(stack) != NULL)
+            {
+                node->rChild = pop(stack); 
+
+                //non 'function operators' take two arguments 
+                if(peek(stack) != NULL && !isFunc)
+                    node->lChild = pop(stack); 
+
+                push(stack, node); 
+            }
+            
+        }
+        //if element is an operand push node to stack
+        else
+            push(stack, node); 
+
+        
+        token = strtok(NULL, " ");
+        
+    }
+
+    NODE* root = pop(stack); 
+    freeStack(stack); 
+
+    return root; 
+}
+
+/* 
+DEBUGGING:
+Preorder traversal of tree and print nodes + value in readable format
+*/
+void printTree(NODE *root)
+{
+    printf("r> %s\n", (char*)root->val); 
+
+    rprinttree(root->lChild, "|  ", "|-l> ");
+    rprinttree(root->rChild, "|  ", "|-r> ");
+}
+
+void rprinttree(NODE* node, char* padding, char* pointer)
+{
+    if(node!= NULL)
+    {
+        printf("%s%s%s\n", padding, pointer, (char*)node->val); 
+        char new_padding [1024];
+        snprintf(new_padding, sizeof(new_padding), "%s|  ", padding); 
+
+        rprinttree(node->lChild, new_padding, "|-l> ");
+        rprinttree(node->rChild, new_padding, "|-r> "); 
+    }
+    
 }
 
 /*
@@ -111,7 +167,7 @@ void printstack(Stack* stack)
     }
 }
 
-void push(Stack* stack,char* val)
+void push(Stack* stack,void* val)
 {
     NODE* node = create_node(val, stack->type);
 

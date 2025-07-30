@@ -17,9 +17,11 @@ MACROS
 #define appendChar(str, ch, len) str[len] = ch; str[len+1] = STREND
 #define char2str(str, ch) str[0] = ch; str[1] = STREND
 
-/* 
-Structs 
-*/
+#define imax(a, b) (int) a > (int) b ? a : b
+
+
+typedef enum
+{False, True}Bool; 
 
 //type of data that a node contains in `val`
 typedef enum{
@@ -27,8 +29,8 @@ typedef enum{
     STRING_TYPE //Node contains a string
 }node_datatype;
 
-/*
-Multi purpose node
+/* 
+Structs 
 */
 typedef struct{
     
@@ -37,7 +39,8 @@ typedef struct{
 
     void* lChild; 
     void* rChild;
-}NODE;
+    int level; 
+}NODE; //multipurpose node
 
 typedef struct
 {
@@ -45,9 +48,6 @@ typedef struct
     int len;
     node_datatype type; 
 }Stack;
-
-typedef enum
-{False, True}Bool; 
 
 /* structure for single variate functions*/
 typedef struct
@@ -59,16 +59,14 @@ typedef struct
 }fox; // for f(x) or f o x 
 
 /* 
-
-STRING STACK METHODS
-
+STACK METHODS
 */
 Stack* create_stack(node_datatype type);
 NODE* create_node(void* val, node_datatype datatype);
 
 void free_node(NODE*); 
 void freeStack(Stack* stack);   //free all pointers
-void push(Stack* stack, char* val); 
+void push(Stack* stack, void* val); 
 
 /*
 returns val stored in top node 
@@ -76,10 +74,17 @@ NOTE: call free(val) when done using popped value
 */
 void* pop(Stack* stack); 
 void* peek(Stack* stack);
+
 //debugging:
 void printstack(Stack* stack); 
 
-/* convert infix string expr to postfix expression using stack */
+/* 
+convert infix string expr to postfix expression using stack 
+Parameters:
+    char* expr     - string containing infix expression
+    char* postfix  - string to write postfix expression to
+    int buffersize - size of writeable buffer (i.e., how many bytes is allocated to 'postfix' variable)
+*/
 int infix_to_postfix(char* expr, char* postfix, int buffersize); 
 #define CONCAT_OVERFLOW(s1, s2, buffer) (strlen(s1) + strlen(s2) +1 > (size_t)buffer)
 
@@ -105,9 +110,11 @@ EXPRESSION TREE METHODS
 
 */
 
-/* Create a tree node*/
-NODE* create_NODE(char* val); 
 /* Free all memory allocated by the expression tree */
 void freeTree(NODE* root);     
 /* Create expression tree from postfix string */
 NODE* create_expression_tree(char* postfix);
+
+/* debugging */
+void rprinttree(NODE* node, char* padding, char* pointer); 
+void printTree(NODE* root); 
