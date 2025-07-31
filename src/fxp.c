@@ -4,6 +4,45 @@
 #include <string.h>
 #include "fxp.h"
 
+/*----f o x METHODS----*/
+FOX* initfunc(char* expr)
+{
+    FOX* fox = NULL;
+
+    int buffersize = strlen(expr)*2; 
+    char postfix [buffersize]; 
+    int err = infix_to_postfix(expr, postfix, buffersize); 
+    if(!err)
+    {
+        /* 
+        Parse expression and only accept 1 dependent variable of x.
+        The reason I parsed the string *again* here was because I was worried 
+        if I hard coded this constraint to infix_to_postfix it would restrict 
+        that function unnecessarily and wouldn't make much sense. Small trade off for clariy 
+        */
+        char* token = strtok(postfix, " ");
+        while (token != NULL)
+        {
+            if(!isdigit(token) && !isStrOpr(token) && !(isOperator(token[0])) && token[0] != 'x')
+            {
+                printf("ERR: FOX only accepts 1 dependent variable of x: invalid char '%c' in expression: %s", token[0], expr); 
+                break;
+            }
+        }
+
+        NODE* root = create_expression_tree(postfix); 
+        fox = malloc(sizeof(FOX));
+        fox->exprTree = root; 
+    }
+
+    return fox; 
+}
+
+void freeFox(FOX* f)
+{
+    freeTree(f->exprTree); 
+    free(f); 
+}
 
 /*----EXPRESSION TREE DATA STRUCTURE----*/
 
@@ -63,12 +102,12 @@ NODE* create_expression_tree(char *postfix)
 }
 
 /* 
-DEBUGGING:
+DEBUGGING EXPR TREE:
 Preorder traversal of tree and print nodes + value in readable format
 */
 void printTree(NODE *root)
 {
-    printf("r> %s\n", (char*)root->val); 
+    printf("ro> %s\n", (char*)root->val); 
 
     rprinttree(root->lChild, "|  ", "|-l> ");
     rprinttree(root->rChild, "|  ", "|-r> ");
@@ -86,6 +125,16 @@ void rprinttree(NODE* node, char* padding, char* pointer)
         rprinttree(node->rChild, new_padding, "|-r> "); 
     }
     
+}
+
+float evaluate_tree(NODE* node, float x)
+{
+    float result = 0.0f; 
+    if(node != NULL)
+    {
+
+    }
+    return result; 
 }
 
 /*
@@ -232,7 +281,7 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
     by adding '5' to the postfix expression, replacing it with '*' and skipping the iteration
     */
     char* local_expr;
-    local_expr = malloc(sizeof(expr) + 1); 
+    local_expr = malloc(strlen(expr) + 1); 
     if(local_expr == NULL)
     {
         printf("failed to allocated `local_expr`"); 
@@ -257,8 +306,8 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
 
     char ch;
     int i= 0; 
-    int len = (int) strlen(local_expr);  
-    while(i < len && !errcode)
+ 
+    while(local_expr[i] != '\0' && !errcode)
     {
         ch = local_expr[i]; 
         isFunc = False; 
@@ -274,9 +323,14 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
                 check_char = isalpha;
 
             char2str(currStr, ch);       //make currstr = c
-            while(local_expr[i+1] != STREND && check_char(local_expr[i+1])) //while next char is a digit or letter respectively
+            Bool prev_decimal = False; 
+            
+            while(local_expr[i+1] != STREND && (check_char(local_expr[i+1]) || (check_char == isdigit && !prev_decimal && local_expr[i+1] == '.')) ) //while next char is a digit or letter respectively
             {
                 i++;
+                if(local_expr[i] == '.')
+                    prev_decimal = True; 
+
                 currstrlen = strlen(currStr);
                 //handle str overflow
                 if (currstrlen == 50)
@@ -287,7 +341,7 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
                     }
                 appendChar(currStr, local_expr[i], currstrlen); // append character
             }
-
+ 
             if (isalpha(currStr[0])) 
                 isFunc = isStrOpr(currStr); 
         }
@@ -368,6 +422,7 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
             //add operand to postfix expression
             else if(!CONCAT_OVERFLOW(postfix, currStr, buffersize))
                 {
+                    
                 strncat(postfix, currStr, strlen(currStr));
                 strncat(postfix, " ", 2); 
 
@@ -458,7 +513,7 @@ int infix_to_postfix(char* expr, char* postfix, int buffersize)
         //err invalid character
         else 
         {
-            printf("ERROR: Invalid character: %c\n", ch); 
+            printf("ERROR: Invalid character: '%c'\n", ch); 
             errcode = -999;
             break; 
         }
