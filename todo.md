@@ -4,5 +4,8 @@
 
 - [ ] Create interface for representing functions as `fox` ("f of x") structs
     - [ ] evaluate expression at x
-    - [ ] get inverse of equation
-    - [ ] get derivative of equation
+
+- [ ] Create linear interpolation function
+
+
+ONLY evaluate expression, will use linear interpolation instead of inverse function for simplicity.
