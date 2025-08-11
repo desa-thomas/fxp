@@ -132,7 +132,20 @@ float evaluate_tree(NODE* node, float x)
     float result = 0.0f; 
     if(node != NULL)
     {
+        char*val = node->val;
 
+        //if operand return value
+        if(isdigit(val[0]))
+            return strtof(val, NULL); 
+
+        else if(val[0] == 'x')
+            return x; 
+
+
+        //A = solve(lchild)
+        //B = solve(rchild) NOTE: strfuncs only have right child
+
+        //return: A operator B or operator(B)
     }
     return result; 
 }

@@ -3,14 +3,13 @@
 #include "fxp.h"
 
 void stack_testing();
+void test_infix_to_postfix();
+void test_tree(); 
 
 int main()
-{
-
-    return 0; 
+{    
+    test_tree(); 
 }   
-
-
 
 /*
 TESTING STACK DATA STRUCTURE IN 'fxp.h'
@@ -73,4 +72,20 @@ void test_infix_to_postfix()
         scanf(" %[^\n]", expr); 
 
     }
+}
+
+void test_tree()
+{
+    char* expr = "5.0sin(x+4.5)^2 + 4x^2 + c";
+    char postfix [200]; 
+    int err = infix_to_postfix(expr, postfix, 200); 
+    if(!err)
+    {
+        printf("expr: %s\n", expr); 
+        NODE* root = create_expression_tree(postfix); 
+
+        printTree(root); 
+        freeTree(root); 
+    }
+
 }

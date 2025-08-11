@@ -1,13 +1,18 @@
 /*
-fxp: lightweight C function parser and utility
+fxp: lightweight math function parser and utility library
 */
 
 /*
+---------
 CONSTANTS
+---------
 */
 #define STREND '\0'
+
 /*
+------
 MACROS
+------
 */
 
 #define isOperator(expr) expr == '+' || expr == '-' || expr == '*' || expr == '/' || expr == '^'
@@ -19,6 +24,11 @@ MACROS
 
 #define imax(a, b) (int) a > (int) b ? a : b
 
+/*
+-----
+ENUMS
+-----
+*/
 
 typedef enum
 {False, True}Bool; 
@@ -52,14 +62,31 @@ typedef struct
 /* structure for single variate functions*/
 typedef struct
 {
-    /* independent and dependent variables */
-    char indep;
-    char dep;
+    NODE* exprTree; 
 
-}fox; // for f(x) or f o x 
+}FOX; // for f(x) or f o x 
 
 /* 
+-------------
+f o x METHODS
+-------------
+*/
+
+/*
+create a FOX struct from a string (math) expression.
+NOTE: 
+    can only create a FOX struct from expressions with a single variable 'x',
+    multivariate functions or functions of another variable are not currently supported
+
+Usage:  
+    FOX* f = initfunc("3sin(x) + 5"); 
+*/
+FOX* initfunc(char* expr); 
+void freeFox(FOX* f); 
+/* 
+-------------
 STACK METHODS
+-------------
 */
 Stack* create_stack(node_datatype type);
 NODE* create_node(void* val, node_datatype datatype);
@@ -80,22 +107,33 @@ void printstack(Stack* stack);
 
 /* 
 convert infix string expr to postfix expression using stack 
+
+Usage:
+    char postfix [200];
+    int err = infix_to_postfix("x^2 + 4x + 3", postfix, 200); 
+
 Parameters:
     char* expr     - string containing infix expression
     char* postfix  - string to write postfix expression to
     int buffersize - size of writeable buffer (i.e., how many bytes is allocated to 'postfix' variable)
+
+Returns:
+    int errcode:
+        0           - no errors
+        -999        - a error occured 
 */
 int infix_to_postfix(char* expr, char* postfix, int buffersize); 
 #define CONCAT_OVERFLOW(s1, s2, buffer) (strlen(s1) + strlen(s2) +1 > (size_t)buffer)
 
 /*
-Checks if a string is a function identifier i.e., log, cos, sin, sqrt ...
+Checks if a string is a "function operator" i.e., log, cos, sin, sqrt ...
 as oposed to an operator represented by a char, like '+', '-', '*', '-' ...
 
-The reason for the name is because "log", etc, and be thought of a "string operators"
+The reason for the name is because "sin", "cos", etc, can be thought of as "string operators"
 and '-', '+', etc as "character operators" in the context of the infix to postfix conversion algorithm
 */
 Bool isStrOpr(char* expr); 
+
 /* 
 Compare char operators oper1 and opr2 by precedence
 -1 lower precedence
@@ -105,15 +143,17 @@ Compare char operators oper1 and opr2 by precedence
 int cmpopr(char opr1, char opr2); 
 
 /* 
-|
+-----------------------
 EXPRESSION TREE METHODS 
-
+-----------------------
 */
 
 /* Free all memory allocated by the expression tree */
 void freeTree(NODE* root);     
 /* Create expression tree from postfix string */
 NODE* create_expression_tree(char* postfix);
+
+float evaluate_tree(NODE*node, float x); 
 
 /* debugging */
 void rprinttree(NODE* node, char* padding, char* pointer); 
