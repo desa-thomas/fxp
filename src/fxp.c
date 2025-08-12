@@ -1,8 +1,14 @@
 #include "fxp.h"
 #include <ctype.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+const function_entry funcs[] = {
+    {"sin", sin},   {"cos", cos}, {"tan", tan},
+    {"sqrt", sqrt}, {"ln", log},  {"exp", exp},
+};
 
 /*----f o x METHODS----*/
 FOX *initfunc(char *expr) {
@@ -116,8 +122,8 @@ void rprinttree(NODE *node, char *padding, char *pointer) {
   }
 }
 
-float evaluate_tree(NODE *node, float x) {
-  float result = 0.0f;
+double evaluate_tree(NODE *node, double x) {
+  double result = 0.0f;
   if (node != NULL) {
     char *val = node->val;
 
@@ -128,14 +134,30 @@ float evaluate_tree(NODE *node, float x) {
     else if (val[0] == 'x')
       return x;
 
-    // A = solve(lchild)
-    // B = solve(rchild) NOTE: strfuncs only have right child
+    Bool stropr = isStrOpr(node->val);
 
-    // return: A operator B or operator(B)
+    double A = 0.0f, B = 0.0f;
+    if (!stropr)
+      A = evaluate_tree(node->lChild, x);
+
+    // NOTE: str operators only have a right child
+    B = evaluate_tree(node->rChild, x);
+    // TODO: Make the eval function
+    // return eval(A, B, node->, stropr)
   }
   return result;
 }
 
+double eval(double A, double B, char *operation, Bool is_stropr) {
+
+  const int funcs_len = sizeof(funcs) / sizeof(funcs[0]);
+
+  if (is_stropr) {
+    for (int i = 0; i < funcs_len; i++) {
+    }
+  }
+  return 0.0;
+}
 /*
 ---- NODE ----
 */
@@ -286,7 +308,7 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
   int (*check_char)(int) =
       NULL;    // A function pointer!!! will point to isalpha or isdigit
   Bool isFunc; // True if the current parsed string is a function operator (sin,
-               // cos...etc)
+  Bool isConst;              // cos...etc)
 
   char ch;
   int i = 0;
@@ -297,7 +319,7 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
 
     strcpy(currStr, "");
 
-    // Parse number or function
+    // Parse number or function or constant
     if (isdigit(ch) || isalpha(ch)) {
       if (isdigit(ch))
         check_char = isdigit;
@@ -328,8 +350,10 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
         appendChar(currStr, local_expr[i], currstrlen); // append character
       }
 
-      if (isalpha(currStr[0]))
+      if (isalpha(currStr[0])){
         isFunc = isStrOpr(currStr);
+        isConst = isConstant(currStr);
+      }
     }
 
     // is operator +, -, /, *, ^ or sin cos ..etc
@@ -393,8 +417,8 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
 
     // If it is an operand
     else if (isdigit(currStr[0]) || isalpha(currStr[0])) {
-      // make sure it is a valid function operator
-      if (isalpha(currStr[0]) && isalpha(currStr[1]) && !isStrOpr(currStr)) {
+      // make sure it is a valid function operator or constant
+      if (isalpha(currStr[0]) && isalpha(currStr[1]) && !isFunc && !isConst ){
         printf("ERROR: \"%s\" is not a valid operator\n", currStr);
         errcode = -999;
       }
@@ -517,7 +541,7 @@ Bool isStrOpr(char *expr) {
 
   Bool isStrOpr = False;
   const char *funcs[] = {"cos", "sin", "tan", "sec", "csc",
-                         "cot", "log", "exp", "sqrt"};
+                         "cot", "ln",  "exp", "sqrt"};
 
   for (int i = 0; i < len(funcs); i++) {
     if (strcmp(expr, funcs[i]) == 0) {
@@ -527,6 +551,22 @@ Bool isStrOpr(char *expr) {
   }
 
   return isStrOpr;
+}
+
+Bool isConstant(char *expr) {
+  if (expr == NULL)
+    return False;
+
+  Bool isConst = False;
+  const char *constants[] = {"Pi", "pi", "pi"}; 
+
+  for (int i = 0; i < len(constants); i++) {
+    if (strcmp(constants[i], expr) == 0) {
+      isConst = True;
+      break;
+    }
+  }
+  return isConst;
 }
 
 // compare two char operators

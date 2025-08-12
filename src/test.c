@@ -76,7 +76,7 @@ void test_infix_to_postfix()
 
 void test_tree()
 {
-    char* expr = "4x + b";
+    char* expr = "sin(pii/2)+ x";
     char postfix [200]; 
     int err = infix_to_postfix(expr, postfix, 200); 
     if(!err)

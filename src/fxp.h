@@ -66,6 +66,10 @@ typedef struct
 
 }FOX; // for f(x) or f o x 
 
+typedef struct {
+    const char* name;
+    double (*func)(double);
+} function_entry;
 /* 
 -------------
 f o x METHODS
@@ -133,7 +137,7 @@ The reason for the name is because "sin", "cos", etc, can be thought of as "stri
 and '-', '+', etc as "character operators" in the context of the infix to postfix conversion algorithm
 */
 Bool isStrOpr(char* expr); 
-
+Bool isConstant(char* expr);
 /* 
 Compare char operators oper1 and opr2 by precedence
 -1 lower precedence
@@ -153,8 +157,16 @@ void freeTree(NODE* root);
 /* Create expression tree from postfix string */
 NODE* create_expression_tree(char* postfix);
 
-float evaluate_tree(NODE*node, float x); 
+double evaluate_tree(NODE*node, double x); 
 
 /* debugging */
 void rprinttree(NODE* node, char* padding, char* pointer); 
-void printTree(NODE* root); 
+void printTree(NODE* root);
+
+/*
+ * Apply operations on A and B.
+ *
+ * If is_stropr is true, applies operation only on B
+ */
+double eval(double A, double B, char* operation, Bool is_stropr);
+
