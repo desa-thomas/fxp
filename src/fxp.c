@@ -79,7 +79,7 @@ NODE *create_expression_tree(char *postfix) {
     // if element is an operator: pop() = right_child, pop() = left_child. push
     // current node
     Bool isFunc = isStrOpr(token);
-    if (isFunc || isOperator(token[0])) {
+    if (isFunc || ((isOperator(token[0])) && !(isnegative(token)) ) ) {
       if (peek(stack) != NULL) {
         node->rChild = pop(stack);
 

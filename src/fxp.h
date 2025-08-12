@@ -24,6 +24,7 @@ MACROS
 
 #define imax(a, b) (int) a > (int) b ? a : b
 
+#define isnegative(str) str[0] == '-' && isdigit(str[1])
 /*
 -----
 ENUMS
