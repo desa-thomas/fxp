@@ -5,10 +5,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-const function_entry funcs[] = {
+const function_entry func_mappings[] = {
     {"sin", sin},   {"cos", cos}, {"tan", tan},
     {"sqrt", sqrt}, {"ln", log},  {"exp", exp},
 };
+
+const char *valid_functions[] = {"cos", "sin", "tan", "sec", "csc",
+                                 "cot", "ln",  "exp", "sqrt"};
+const char *valid_constants[] = {"Pi", "pi", "pi"};
 
 /*----f o x METHODS----*/
 FOX *initfunc(char *expr) {
@@ -147,13 +151,38 @@ double evaluate_tree(NODE *node, double x) {
   }
   return result;
 }
-
-double eval(double A, double B, char *operation, Bool is_stropr) {
-
-  const int funcs_len = sizeof(funcs) / sizeof(funcs[0]);
-
+// only apply to B if is_stropr
+double eval(double A, double B, char *operation, Bool is_stropr, Bool *err) {
+  const int funcs_len = sizeof(func_mappings) / sizeof(func_mappings[0]);
+  double result = 0.0;
+  *(err) = True;
+ 
+  //if a string operator, apply the function only to B
   if (is_stropr) {
     for (int i = 0; i < funcs_len; i++) {
+      if (strcmp(operation, func_mappings[i].name) == 0) {
+        result = func_mappings[i].func(B);
+        *(err) = False;
+        break;
+      }
+    }
+  } else {
+    switch (operation[0]) {
+	case '+':
+		result = A + B;  
+		break;
+	case '-':
+		result = A - B; 
+		break; 
+	case '*':
+		result = A * B; 
+		break;
+	case '/':
+		result = A / B; 
+		break; 
+	case '^':
+		result = pow(A, B); 
+		break;
     }
   }
   return 0.0;
@@ -307,26 +336,55 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
   int currstrlen = 0;
   int (*check_char)(int) =
       NULL;    // A function pointer!!! will point to isalpha or isdigit
-  Bool isFunc; // True if the current parsed string is a function operator (sin,
-  Bool isConst;              // cos...etc)
 
+  Bool isFunc; // True if the current parsed string is a function operator (sin,
+  Bool isConst; // special const like pi 
+  Bool isOperand; // is an operand in general
+  Bool isOpr; // is an operator in general
   char ch;
   int i = 0;
 
   while (local_expr[i] != '\0' && !errcode) {
     ch = local_expr[i];
     isFunc = False;
+    isConst = False; 
+    isOperand = False; 
 
-    strcpy(currStr, "");
+    currStr[0] = STREND; 
+
+    //parse a negative number like: -1 or -sin, but not: - 4 
+    if(ch == '-' && local_expr[i+1] && !isspace(local_expr[i+1])){
+      const char next_ch = local_expr[i+1]; 
+
+      // -(...) or -sin ...
+      if(isBracket(next_ch) || isalpha(local_expr[i+1])){
+	strcpy(currStr, "-1");
+	isOperand = True;
+     }
+      else if(isalpha(local_expr[i+1]) || isdigit(local_expr[i+1])){
+	      strcpy(currStr, "-");
+	      i++;
+	      ch = local_expr[i]; 
+      }
+      printf("CurrStr (1): %s, i:%d, local_expr:%s\n", currStr, i, local_expr); 
+    }
 
     // Parse number or function or constant
-    if (isdigit(ch) || isalpha(ch)) {
+    if (isdigit(ch) || isalpha(ch) ) {
       if (isdigit(ch))
         check_char = isdigit;
       else
         check_char = isalpha;
+      
+      if (currStr[0] == '-')
+      {
+        currStr[1] = ch;
+	currStr[2] = STREND; 
+      }
+      else{
+	      char2str(currStr, ch); 
+      }
 
-      char2str(currStr, ch); // make currstr = c
       Bool prev_decimal = False;
 
       while (local_expr[i + 1] != STREND &&
@@ -350,14 +408,16 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
         appendChar(currStr, local_expr[i], currstrlen); // append character
       }
 
-      if (isalpha(currStr[0])){
+      if (isalpha(currStr[0])) {
         isFunc = isStrOpr(currStr);
         isConst = isConstant(currStr);
       }
+        isOperand = !isFunc; 
     }
 
     // is operator +, -, /, *, ^ or sin cos ..etc
-    if (isOperator(ch) || isFunc) {
+    if ( ((!isOperand) && (isOperator(ch))) || isFunc) {
+
       char *peekval = peek(stack);
 
       if (
@@ -416,13 +476,12 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
     }
 
     // If it is an operand
-    else if (isdigit(currStr[0]) || isalpha(currStr[0])) {
+    else if (isOperand) {
       // make sure it is a valid function operator or constant
-      if (isalpha(currStr[0]) && isalpha(currStr[1]) && !isFunc && !isConst ){
+      if (isalpha(currStr[0]) && isalpha(currStr[1]) && !isFunc && !isConst) {
         printf("ERROR: \"%s\" is not a valid operator\n", currStr);
         errcode = -999;
       }
-
       // add operand to postfix expression
       else if (!CONCAT_OVERFLOW(postfix, currStr, buffersize)) {
 
@@ -431,9 +490,8 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
 
         // detect implicit multiplication i.e., 5(x) => 5*(x), 4sin(x) =>
         // 4*sin(x)
-        if (isdigit(currStr[0]) &&
-            (local_expr[i + 1] == '(' || isalpha(local_expr[i + 1]))) {
-          local_expr[i] = '*';
+        if (local_expr[i + 1] == '(' || isalpha(local_expr[i + 1]) ) {  
+	local_expr[i] = '*';
           continue;
         }
       } else
@@ -540,11 +598,9 @@ Bool isStrOpr(char *expr) {
     return False;
 
   Bool isStrOpr = False;
-  const char *funcs[] = {"cos", "sin", "tan", "sec", "csc",
-                         "cot", "ln",  "exp", "sqrt"};
 
-  for (int i = 0; i < len(funcs); i++) {
-    if (strcmp(expr, funcs[i]) == 0) {
+  for (int i = 0; i < len(valid_functions); i++) {
+    if (strcmp(expr, valid_functions[i]) == 0) {
       isStrOpr = True;
       break;
     }
@@ -558,10 +614,9 @@ Bool isConstant(char *expr) {
     return False;
 
   Bool isConst = False;
-  const char *constants[] = {"Pi", "pi", "pi"}; 
 
-  for (int i = 0; i < len(constants); i++) {
-    if (strcmp(constants[i], expr) == 0) {
+  for (int i = 0; i < len(valid_constants); i++) {
+    if (strcmp(valid_constants[i], expr) == 0) {
       isConst = True;
       break;
     }

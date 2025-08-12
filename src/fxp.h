@@ -168,5 +168,5 @@ void printTree(NODE* root);
  *
  * If is_stropr is true, applies operation only on B
  */
-double eval(double A, double B, char* operation, Bool is_stropr);
+double eval(double A, double B, char* operation, Bool is_stropr, Bool* err);
 

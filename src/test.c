@@ -76,12 +76,13 @@ void test_infix_to_postfix()
 
 void test_tree()
 {
-    char* expr = "sin(pii/2)+ x";
+    char* expr = "-20sin(pi/x)";
     char postfix [200]; 
     int err = infix_to_postfix(expr, postfix, 200); 
     if(!err)
     {
-        printf("expr: %s\n", expr); 
+        printf("expr: %s\n", expr);
+        printf("postfix: %s\n", postfix); 
         NODE* root = create_expression_tree(postfix); 
 
         printTree(root); 
