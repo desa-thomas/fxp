@@ -24,7 +24,8 @@ MACROS
 
 #define imax(a, b) (int) a > (int) b ? a : b
 
-#define isnegative(str) str[0] == '-' && isdigit(str[1])
+#define isnegative(str) str[0] == '-' && str[1] != '\0' && isdigit(str[1])
+
 /*
 -----
 ENUMS
@@ -40,6 +41,14 @@ typedef enum{
     STRING_TYPE //Node contains a string
 }node_datatype;
 
+typedef enum{
+  NONE, 
+  OPERATOR,
+  OPERAND, 
+  OPEN_BRACKET, 
+  CLOSE_BRACKET,
+  FUNCTION 
+} Expr_Token; 
 /* 
 Structs 
 */
@@ -71,6 +80,7 @@ typedef struct {
     const char* name;
     double (*func)(double);
 } function_entry;
+
 /* 
 -------------
 f o x METHODS
@@ -170,4 +180,4 @@ void printTree(NODE* root);
  * If is_stropr is true, applies operation only on B
  */
 double eval(double A, double B, char* operation, Bool is_stropr, Bool* err);
-
+      

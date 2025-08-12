@@ -76,7 +76,7 @@ void test_infix_to_postfix()
 
 void test_tree()
 {
-    char* expr = "-20sin(pi/x)";
+    char* expr = "sqrt(5x++)";
     char postfix [200]; 
     int err = infix_to_postfix(expr, postfix, 200); 
     if(!err)
@@ -86,7 +86,17 @@ void test_tree()
         NODE* root = create_expression_tree(postfix); 
 
         printTree(root); 
+
+        double result = evaluate_tree(root, 5); 
+        printf("f(5) = %f\n", result);
+
         freeTree(root); 
     }
+
+}
+
+void test_evaluating()
+{
+  const char* exprs [] = {"x^2 + 3x +5", " sin(x/2), 5e^x, e^(10x),sqrt()"}; 
 
 }

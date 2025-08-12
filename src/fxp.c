@@ -5,8 +5,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+double cot(double x){
+  return 1/tan(x);
+}
+double csc(double x){
+  return 1/sin(x); 
+}
+double sec(double x){
+  return 1/cos(x); 
+}
 const function_entry func_mappings[] = {
-    {"sin", sin},   {"cos", cos}, {"tan", tan},
+    {"sin", sin},   {"cos", cos}, {"tan", tan}, 
+    {"csc", csc},   {"sec", sec}, {"cot", cot},
     {"sqrt", sqrt}, {"ln", log},  {"exp", exp},
 };
 
@@ -79,7 +89,7 @@ NODE *create_expression_tree(char *postfix) {
     // if element is an operator: pop() = right_child, pop() = left_child. push
     // current node
     Bool isFunc = isStrOpr(token);
-    if (isFunc || ((isOperator(token[0])) && !(isnegative(token)) ) ) {
+    if (isFunc || ((isOperator(token[0])) && !(isnegative(token)))) {
       if (peek(stack) != NULL) {
         node->rChild = pop(stack);
 
@@ -127,28 +137,44 @@ void rprinttree(NODE *node, char *padding, char *pointer) {
 }
 
 double evaluate_tree(NODE *node, double x) {
+
   double result = 0.0f;
   if (node != NULL) {
     char *val = node->val;
 
     // if operand return value
-    if (isdigit(val[0]))
-      return strtof(val, NULL);
+    if (isdigit(val[0]) || (isnegative(val)))
+      return strtod(val, NULL);
 
     else if (val[0] == 'x')
       return x;
 
+    else if (val[0] == 'e')
+      return exp(1);
+
     Bool stropr = isStrOpr(node->val);
 
     double A = 0.0f, B = 0.0f;
+
     if (!stropr)
       A = evaluate_tree(node->lChild, x);
 
     // NOTE: str operators only have a right child
     B = evaluate_tree(node->rChild, x);
-    // TODO: Make the eval function
-    // return eval(A, B, node->, stropr)
+
+    Bool err;
+    result = eval(A, B, node->val, stropr, &err);
+    if (err) {
+      if (!stropr) {
+        printf("An error occured evaluating: '%s %s %s'", (char *)node->lChild,
+               (char *)node->val, (char *)node->rChild);
+      } else {
+        printf("An error occured evaluating: %s %s", (char*) node->val,
+               (char *)node->rChild);
+      }
+    }
   }
+
   return result;
 }
 // only apply to B if is_stropr
@@ -156,8 +182,8 @@ double eval(double A, double B, char *operation, Bool is_stropr, Bool *err) {
   const int funcs_len = sizeof(func_mappings) / sizeof(func_mappings[0]);
   double result = 0.0;
   *(err) = True;
- 
-  //if a string operator, apply the function only to B
+
+  // if a string operator, apply the function only to B
   if (is_stropr) {
     for (int i = 0; i < funcs_len; i++) {
       if (strcmp(operation, func_mappings[i].name) == 0) {
@@ -167,25 +193,31 @@ double eval(double A, double B, char *operation, Bool is_stropr, Bool *err) {
       }
     }
   } else {
+    *(err) = False;
+
     switch (operation[0]) {
-	case '+':
-		result = A + B;  
-		break;
-	case '-':
-		result = A - B; 
-		break; 
-	case '*':
-		result = A * B; 
-		break;
-	case '/':
-		result = A / B; 
-		break; 
-	case '^':
-		result = pow(A, B); 
-		break;
+    case '+':
+      result = A + B;
+      break;
+    case '-':
+      result = A - B;
+      break;
+    case '*':
+      result = A * B;
+      break;
+    case '/':
+      result = A / B;
+      break;
+    case '^':
+      result = pow(A, B);
+      break;
+    default:
+      *(err) = True;
+      printf("'%c' is not a valid operator\n", operation[0]);
+      break;
     }
   }
-  return 0.0;
+  return result;
 }
 /*
 ---- NODE ----
@@ -335,54 +367,50 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
   char currStr[50]; // holds parsed number or funciton e.g., "900" or "sin"
   int currstrlen = 0;
   int (*check_char)(int) =
-      NULL;    // A function pointer!!! will point to isalpha or isdigit
+      NULL; // A function pointer!!! will point to isalpha or isdigit
 
   Bool isFunc; // True if the current parsed string is a function operator (sin,
-  Bool isConst; // special const like pi 
+  Bool isConst;   // special const like pi
   Bool isOperand; // is an operand in general
-  Bool isOpr; // is an operator in general
   char ch;
   int i = 0;
 
   while (local_expr[i] != '\0' && !errcode) {
     ch = local_expr[i];
     isFunc = False;
-    isConst = False; 
-    isOperand = False; 
+    isConst = False;
+    isOperand = False;
 
-    currStr[0] = STREND; 
+    currStr[0] = STREND;
 
-    //parse a negative number like: -1 or -sin, but not: - 4 
-    if(ch == '-' && local_expr[i+1] && !isspace(local_expr[i+1])){
-      const char next_ch = local_expr[i+1]; 
+    // parse a negative number like: -1 or -sin, but not: - 4
+    if (ch == '-' && local_expr[i + 1] && !isspace(local_expr[i + 1])) {
+      const char next_ch = local_expr[i + 1];
 
       // -(...) or -sin ...
-      if(isBracket(next_ch) || isalpha(local_expr[i+1])){
-	strcpy(currStr, "-1");
-	isOperand = True;
-     }
-      else if(isalpha(local_expr[i+1]) || isdigit(local_expr[i+1])){
-	      strcpy(currStr, "-");
-	      i++;
-	      ch = local_expr[i]; 
+      if (isBracket(next_ch) || isalpha(local_expr[i + 1])) {
+        strcpy(currStr, "-1");
+        isOperand = True;
+      } else if (isalpha(local_expr[i + 1]) || isdigit(local_expr[i + 1])) {
+        strcpy(currStr, "-");
+        i++;
+        ch = local_expr[i];
       }
-      printf("CurrStr (1): %s, i:%d, local_expr:%s\n", currStr, i, local_expr); 
+      printf("CurrStr (1): %s, i:%d, local_expr:%s\n", currStr, i, local_expr);
     }
 
     // Parse number or function or constant
-    if (isdigit(ch) || isalpha(ch) ) {
+    if (isdigit(ch) || isalpha(ch)) {
       if (isdigit(ch))
         check_char = isdigit;
       else
         check_char = isalpha;
-      
-      if (currStr[0] == '-')
-      {
+
+      if (currStr[0] == '-') {
         currStr[1] = ch;
-	currStr[2] = STREND; 
-      }
-      else{
-	      char2str(currStr, ch); 
+        currStr[2] = STREND;
+      } else {
+        char2str(currStr, ch);
       }
 
       Bool prev_decimal = False;
@@ -412,11 +440,11 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
         isFunc = isStrOpr(currStr);
         isConst = isConstant(currStr);
       }
-        isOperand = !isFunc; 
+      isOperand = !isFunc;
     }
 
     // is operator +, -, /, *, ^ or sin cos ..etc
-    if ( ((!isOperand) && (isOperator(ch))) || isFunc) {
+    if (((!isOperand) && (isOperator(ch))) || isFunc) {
 
       char *peekval = peek(stack);
 
@@ -490,8 +518,8 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
 
         // detect implicit multiplication i.e., 5(x) => 5*(x), 4sin(x) =>
         // 4*sin(x)
-        if (local_expr[i + 1] == '(' || isalpha(local_expr[i + 1]) ) {  
-	local_expr[i] = '*';
+        if (local_expr[i + 1] == '(' || isalpha(local_expr[i + 1])) {
+          local_expr[i] = '*';
           continue;
         }
       } else
