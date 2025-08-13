@@ -8,13 +8,15 @@ void test_tree();
 void test_list_exprs(char *exprs[], int len);
 void test_evaluating();
 
-int main() {
-  char *exprs[] = {"(++ 3)", "56 (( 89 -", "(3 + ) + 4", "sin sin sin x"};
-  test_list_exprs(exprs, (int)sizeof(exprs) / sizeof(exprs[0]));
+char *exprs[] = {"(++ 3)", "56 (( 89 -", "(3 + ) + 4", "sin sin sin x"};
+char* more_exprs[] = {"x^2 + 3x + 5", "sin(x/2)", "5e^x", "e^(10x)", "sqrt((x^2+4)/x^3)", "((e^(2x) + e^x + 3)/(4x^2 + 5) )^2"};
 
-  char* more_exprs[] = {"x^2 + 3x + 5", "sin(x/2)", "5e^x", "e^(10x)", "sqrt((x^2+4)/x^3)", "((e^(2x) + e^x + 3)/(4x^2 + 5) )^2"};
-  test_list_exprs(more_exprs, (int)(sizeof(more_exprs)/sizeof(more_exprs[0]))); 
+int main() {
+  // test_list_exprs(exprs, (int)sizeof(exprs) / sizeof(exprs[0]));
+  // test_list_exprs(more_exprs, (int)(sizeof(more_exprs)/sizeof(more_exprs[0]))); 
   
+  double res =  linear_interpolation_x(1, 5, 5, 5, 3);
+  printf("res: %.2f\n", res); 
 }
 
 /*

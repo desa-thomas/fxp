@@ -180,4 +180,17 @@ void printTree(NODE* root);
  * If is_stropr is true, applies operation only on B
  */
 double eval(double A, double B, char* operation, Bool is_stropr, Bool* err);
-      
+
+/*
+ * Linearly interpolate x coordinate between two points.
+ *
+ * |  *  (x1, y1)
+ * |
+ * |
+ * |         x (yPrime)
+ * | 
+ * |              * (x2, y2)
+ * |------------------------- 
+ */ 
+double linear_interpolation_x(double x1, double y1, double x2, double y2, double yPrime);
+

@@ -710,3 +710,24 @@ int cmpopr(char opr1, char opr2) {
 
   return cmp;
 }
+
+/* MISC MATH FUNCTIONS */ 
+Bool double_equal(double a, double b) {
+  double epsilon = 1e-9;   
+  return fabs(a - b) < epsilon;
+}
+
+double linear_interpolation_x(double x1, double y1, double x2, double y2, double yPrime){
+
+  if(double_equal(y1, y2)){
+    printf("MATH ERR: Cannot linearly interpolate X value from line y = %.2f\n", y1); return INFINITY;  
+  }
+
+  else if(double_equal(x1, x2)){
+    return x1; 
+  }
+
+  double result = (yPrime - y1)* (x2-x1)/(y2-y1) + x1; 
+
+  return result; 
+}
