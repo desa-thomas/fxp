@@ -339,8 +339,7 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
   by adding '5' to the postfix expression, replacing it with '*' and skipping
   the iteration
   */
-  char *local_expr;
-  local_expr = malloc(strlen(expr) + 1);
+  char* local_expr = malloc(strlen(expr) + 1);
   if (local_expr == NULL) {
     printf("failed to allocated `local_expr`");
     return -999;
@@ -350,7 +349,7 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
            (int)(strlen(expr) + 1));
     return -999;
   }
-  strncpy(local_expr, expr, strlen(expr));
+  strcpy(local_expr, expr); 
 
   /* variable setup*/
   int errcode = 0;     // 0 : success, -999 : error
@@ -367,9 +366,9 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
   Bool isOperand; // is an operand in general
   Expr_Token prev_token = NONE;
   char ch;
-  int i = 0;
-
-  while (local_expr[i] != '\0' && !errcode) {
+  int i = 0; 
+ 
+  while ( local_expr[i] != STREND && !errcode) {
     ch = local_expr[i];
     isFunc = False;
     isConst = False;
@@ -612,7 +611,7 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
 
     // err invalid character
     else {
-      printf("ERROR: Invalid character: '%c'\n", ch);
+      printf("ERROR: Invalid character: '%c'. ASCII: '%d'\n", ch, ch);
       errcode = -999;
       break;
     }

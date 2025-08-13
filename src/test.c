@@ -11,6 +11,10 @@ void test_evaluating();
 int main() {
   char *exprs[] = {"(++ 3)", "56 (( 89 -", "(3 + ) + 4", "sin sin sin x"};
   test_list_exprs(exprs, (int)sizeof(exprs) / sizeof(exprs[0]));
+
+  char* more_exprs[] = {"x^2 + 3x + 5", "sin(x/2)", "5e^x", "e^(10x)", "sqrt((x^2+4)/x^3)", "((e^(2x) + e^x + 3)/(4x^2 + 5) )^2"};
+  test_list_exprs(more_exprs, (int)(sizeof(more_exprs)/sizeof(more_exprs[0]))); 
+  
 }
 
 /*
@@ -71,7 +75,7 @@ void test_infix_to_postfix() {
 }
 
 void test_tree() {
-  char *expr = "sqrt(5x)35";
+  char *expr = "5e^x";
   char postfix[200];
   int err = infix_to_postfix(expr, postfix, 200);
   if (!err) {
@@ -92,9 +96,10 @@ void test_list_exprs(char *exprs[], int len) {
   const double test_vals[] = {1, 7, 5.6, 100, -88};
 
   for (int i = 0; i < len; i++) {
-    char postfix[200];
+    char postfix[400];
+    printf("-----------------------------------------------------------------------------------------------\n"); 
     printf("expr: %s\n", exprs[i]);
-    int err = infix_to_postfix(exprs[i], postfix, 200);
+    int err = infix_to_postfix(exprs[i], postfix, 400);
 
     if (!err) {
       printf("postfix: %s\n", postfix);
@@ -102,11 +107,17 @@ void test_list_exprs(char *exprs[], int len) {
       printTree(root);
 
       double result;
-      for (int j; j < (int)(sizeof(test_vals) / sizeof(test_vals[0])); j++) {
+      for (int j = 0; j < (int)(sizeof(test_vals) / sizeof(test_vals[0])); j++) {
         result = evaluate_tree(root, test_vals[j]);
         printf("f(%.2f) = %.2f\n", test_vals[j], result); 
       }
+
+      freeTree(root); 
     }
+    else{
+      printf("Failed to parse infix expression\n"); 
+    }
+
   }
 }
 
