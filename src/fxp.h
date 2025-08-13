@@ -44,9 +44,9 @@ typedef enum{
 typedef enum{
   NONE, 
   OPERATOR,
-  OPERAND, 
+  OPERAND,
+  CLOSED_BRACKET,
   OPEN_BRACKET, 
-  CLOSE_BRACKET,
   FUNCTION 
 } Expr_Token; 
 /* 

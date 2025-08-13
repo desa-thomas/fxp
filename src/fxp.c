@@ -5,19 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-double cot(double x){
-  return 1/tan(x);
-}
-double csc(double x){
-  return 1/sin(x); 
-}
-double sec(double x){
-  return 1/cos(x); 
-}
+double cot(double x) { return 1 / tan(x); }
+double csc(double x) { return 1 / sin(x); }
+double sec(double x) { return 1 / cos(x); }
 const function_entry func_mappings[] = {
-    {"sin", sin},   {"cos", cos}, {"tan", tan}, 
-    {"csc", csc},   {"sec", sec}, {"cot", cot},
-    {"sqrt", sqrt}, {"ln", log},  {"exp", exp},
+    {"sin", sin}, {"cos", cos},   {"tan", tan}, {"csc", csc}, {"sec", sec},
+    {"cot", cot}, {"sqrt", sqrt}, {"ln", log},  {"exp", exp},
 };
 
 const char *valid_functions[] = {"cos", "sin", "tan", "sec", "csc",
@@ -43,7 +36,7 @@ FOX *initfunc(char *expr) {
     while (token != NULL) {
       if (!isdigit(token) && !isStrOpr(token) && !(isOperator(token[0])) &&
           token[0] != 'x') {
-        printf("ERR: FOX only accepts 1 dependent variable of x: invalid char "
+        printf("ERR: FOX only accepts 1 dependent variable of x: invalid char\n"
                "'%c' in expression: %s",
                token[0], expr);
         break;
@@ -166,10 +159,10 @@ double evaluate_tree(NODE *node, double x) {
     result = eval(A, B, node->val, stropr, &err);
     if (err) {
       if (!stropr) {
-        printf("An error occured evaluating: '%s %s %s'", (char *)node->lChild,
+        printf("An error occured evaluating: '%s %s %s'\n", (char *)node->lChild,
                (char *)node->val, (char *)node->rChild);
       } else {
-        printf("An error occured evaluating: %s %s", (char*) node->val,
+        printf("An error occured evaluating: %s %s\n", (char *)node->val,
                (char *)node->rChild);
       }
     }
@@ -372,6 +365,7 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
   Bool isFunc; // True if the current parsed string is a function operator (sin,
   Bool isConst;   // special const like pi
   Bool isOperand; // is an operand in general
+  Expr_Token prev_token = NONE;
   char ch;
   int i = 0;
 
@@ -445,7 +439,15 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
 
     // is operator +, -, /, *, ^ or sin cos ..etc
     if (((!isOperand) && (isOperator(ch))) || isFunc) {
-
+      if (!isFunc && (prev_token == OPEN_BRACKET || prev_token == NONE)) {
+        printf("ERR: Cannot have an open bracket then operator: ' ( %c ' \n", ch);
+        errcode = -999;
+        break;
+      } else if (!isFunc && prev_token == OPERATOR) {
+        printf("ERR: Cannot have operator precede an operator: '* *'\n");
+        errcode = -999;
+        break;
+      }
       char *peekval = peek(stack);
 
       if (
@@ -501,6 +503,7 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
         tmp[1] = STREND;
         push(stack, tmp);
       }
+      prev_token = isFunc ? FUNCTION : OPERATOR;
     }
 
     // If it is an operand
@@ -516,14 +519,18 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
         strncat(postfix, currStr, strlen(currStr));
         strncat(postfix, " ", 2);
 
-        // detect implicit multiplication i.e., 5(x) => 5*(x), 4sin(x) =>
+        // detect implicit multiplication i.e., 5(x) => 5*(x), 4sin(x) x5=>
         // 4*sin(x)
-        if (local_expr[i + 1] == '(' || isalpha(local_expr[i + 1])) {
+        const char next_char = local_expr[i + 1];
+        if (next_char == '(' || isalpha(next_char) || isdigit(next_char)) {
           local_expr[i] = '*';
+          prev_token = OPERAND;
           continue;
         }
       } else
         errcode = -999;
+
+      prev_token = OPERAND;
     }
 
     // If it is a bracket
@@ -534,9 +541,15 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
         tmp[0] = ch;
         tmp[1] = STREND;
         push(stack, tmp);
+        prev_token = OPEN_BRACKET; 
       }
 
       else {
+        if(prev_token == OPERATOR){
+          printf("ERROR: Cannot have operator then close bracket: e.g.' * )\n"); 
+          errcode = -999;
+          break; 
+        }
         // pop and output until '(' is encountered
         while (stack->top != NULL && ((char *)peek(stack))[0] != '(') {
           char *opr = pop(stack);
@@ -577,6 +590,17 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
           }
           free(opr);
         }
+
+        // implicit multiplicatin (...)(...) or (...)x or (...)45
+        const char next_char = local_expr[i + 1];
+        if (next_char &&
+            (isalnum(next_char) || (next_char == '(' || next_char == '['))) {
+          local_expr[i] = '*';
+          prev_token = CLOSED_BRACKET;
+          continue;
+      }
+        
+        prev_token = CLOSED_BRACKET; 
       }
     }
 
@@ -592,7 +616,6 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
       errcode = -999;
       break;
     }
-
     i++;
   }
 

@@ -1,102 +1,112 @@
+#include "fxp.h"
 #include <stdio.h>
 #include <string.h>
-#include "fxp.h"
 
 void stack_testing();
 void test_infix_to_postfix();
-void test_tree(); 
+void test_tree();
+void test_list_exprs(char *exprs[], int len);
+void test_evaluating();
 
-int main()
-{    
-    test_tree(); 
-}   
+int main() {
+  char *exprs[] = {"(++ 3)", "56 (( 89 -", "(3 + ) + 4", "sin sin sin x"};
+  test_list_exprs(exprs, (int)sizeof(exprs) / sizeof(exprs[0]));
+}
 
 /*
 TESTING STACK DATA STRUCTURE IN 'fxp.h'
 */
-void stack_testing()
-{
-    printf("This is major Tom to GroundControl\n"); 
+void stack_testing() {
+  printf("This is major Tom to GroundControl\n");
 
-    Stack* stack = create_stack(STRING_TYPE); 
-    char* arr [5] = {"k", "4", "0", "+", "-"}; 
-    char* peekval; 
+  Stack *stack = create_stack(STRING_TYPE);
+  char *arr[5] = {"k", "4", "0", "+", "-"};
+  char *peekval;
 
-    for (int i = 0; i < (int) (sizeof(arr)/sizeof(arr[0])); i++)
-    {
-        push(stack, arr[i]);
-    }
+  for (int i = 0; i < (int)(sizeof(arr) / sizeof(arr[0])); i++) {
+    push(stack, arr[i]);
+  }
 
-    printstack(stack); 
-    printf("--------Pushed--------\n");
-    peekval = peek(stack); 
-    printf("peek: %s\n", peekval ? peekval: "NULL"); 
+  printstack(stack);
+  printf("--------Pushed--------\n");
+  peekval = peek(stack);
+  printf("peek: %s\n", peekval ? peekval : "NULL");
 
-    while(stack->top)
-    {
-        char* val = pop(stack);
-        printf("pop: %s\n", val); 
-    }
-    char*val = pop(stack); 
-    printf("pop: %s\n", val ? val : "NULL"); 
-    peekval = peek(stack); 
-    printf("peek: %s\n", peekval ? peekval : "NULL"); 
+  while (stack->top) {
+    char *val = pop(stack);
+    printf("pop: %s\n", val);
+  }
+  char *val = pop(stack);
+  printf("pop: %s\n", val ? val : "NULL");
+  peekval = peek(stack);
+  printf("peek: %s\n", peekval ? peekval : "NULL");
 
-    freeStack(stack); 
+  freeStack(stack);
 }
 
 /*
 TEST INFIX TO POSTFIX FUNCTION
 */
-void test_infix_to_postfix()
-{
-    int buffersize = 200; 
+void test_infix_to_postfix() {
+  int buffersize = 200;
+  printf("infix expression: ");
+  char expr[buffersize];
+  char postfix[buffersize];
+
+  scanf("%[^\n]", expr);
+
+  // while 'quit' is not entered: convert infix to postfix
+  while (strcmp(expr, "quit") != 0) {
+
+    int err = infix_to_postfix(expr, postfix, buffersize);
+
+    if (!err)
+      printf("postfix: %s\n", postfix);
+
+    printf("errcode: %d\n", err);
+
     printf("infix expression: ");
-    char expr [buffersize]; 
-    char postfix[buffersize]; 
+    scanf(" %[^\n]", expr);
+  }
+}
 
-    scanf("%[^\n]", expr); 
+void test_tree() {
+  char *expr = "sqrt(5x)35";
+  char postfix[200];
+  int err = infix_to_postfix(expr, postfix, 200);
+  if (!err) {
+    printf("expr: %s\n", expr);
+    printf("postfix: %s\n", postfix);
+    NODE *root = create_expression_tree(postfix);
 
-    //while 'quit' is not entered: convert infix to postfix
-    while(strcmp(expr, "quit") != 0 )
-    {
+    printTree(root);
 
-        int err = infix_to_postfix(expr, postfix, buffersize);
+    double result = evaluate_tree(root, 5);
+    printf("f(5) = %f\n", result);
 
-        if(!err)
-            printf("postfix: %s\n", postfix); 
-        
-        printf("errcode: %d\n", err); 
+    freeTree(root);
+  }
+}
 
-        printf("infix expression: ");
-        scanf(" %[^\n]", expr); 
+void test_list_exprs(char *exprs[], int len) {
+  const double test_vals[] = {1, 7, 5.6, 100, -88};
 
+  for (int i = 0; i < len; i++) {
+    char postfix[200];
+    printf("expr: %s\n", exprs[i]);
+    int err = infix_to_postfix(exprs[i], postfix, 200);
+
+    if (!err) {
+      printf("postfix: %s\n", postfix);
+      NODE *root = create_expression_tree(postfix);
+      printTree(root);
+
+      double result;
+      for (int j; j < (int)(sizeof(test_vals) / sizeof(test_vals[0])); j++) {
+        result = evaluate_tree(root, test_vals[j]);
+        printf("f(%.2f) = %.2f\n", test_vals[j], result); 
+      }
     }
+  }
 }
 
-void test_tree()
-{
-    char* expr = "sqrt(5x++)";
-    char postfix [200]; 
-    int err = infix_to_postfix(expr, postfix, 200); 
-    if(!err)
-    {
-        printf("expr: %s\n", expr);
-        printf("postfix: %s\n", postfix); 
-        NODE* root = create_expression_tree(postfix); 
-
-        printTree(root); 
-
-        double result = evaluate_tree(root, 5); 
-        printf("f(5) = %f\n", result);
-
-        freeTree(root); 
-    }
-
-}
-
-void test_evaluating()
-{
-  const char* exprs [] = {"x^2 + 3x +5", " sin(x/2), 5e^x, e^(10x),sqrt()"}; 
-
-}
