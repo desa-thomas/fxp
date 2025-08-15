@@ -21,9 +21,15 @@ const char *valid_constants[] = {"Pi", "pi", "pi"};
 FOX *initfunc(char *expr) {
   FOX *fox = NULL;
 
-  int buffersize = strlen(expr) * 2;
+  int buffersize =
+      strlen(expr) * 2; // double because the is max size the postfix string can
+
+  // initialize the string to all zeros to avoid tokenizaiton errors
   char postfix[buffersize];
+  memset(postfix, 0, sizeof(postfix));
+
   int err = infix_to_postfix(expr, postfix, buffersize);
+
   if (!err) {
     /*
     Parse expression and only accept 1 dependent variable of x.
@@ -32,40 +38,64 @@ FOX *initfunc(char *expr) {
     that function unnecessarily and wouldn't make much sense. Small trade off
     for clariy
     */
-    char *token = strtok(postfix, " ");
+    
+    char cpy[strlen(postfix)]; 
+    memset(cpy, 0, sizeof(cpy));
+    strcpy(cpy, postfix); 
+
+    char *token = strtok(cpy, " "); //tokenize copy of postfix
+
     while (token != NULL) {
-      if (!isdigit(token) && !isStrOpr(token) && !(isOperator(token[0])) &&
-          token[0] != 'x') {
+
+      if (!isdigit(token[0]) && !isStrOpr(token) && !(isOperator(token[0])) &&
+          (token[0] != 'x' && token[0] != 'e')) {
+
         printf("ERR: FOX only accepts 1 dependent variable of x: invalid char\n"
                "'%c' in expression: %s",
                token[0], expr);
         break;
       }
+
+      token = strtok(NULL, " ");
     }
 
-    NODE *root = create_expression_tree(postfix);
-    fox = malloc(sizeof(FOX));
-    fox->exprTree = root;
-  }
+    if (token == NULL) {
+      NODE *root = create_expression_tree(postfix);
+      if (root)
+        fox = malloc(sizeof(FOX));
+
+      else
+        return NULL; 
+     
+      if(fox)
+        fox->exprTree = root;
+    }
+
+  } else
+    printf("ERROR: Trouble parsing expression\n");
 
   return fox;
 }
 
 void freeFox(FOX *f) {
-  freeTree(f->exprTree);
-  free(f);
+  if (f) {
+    freeTree(f->exprTree);
+    free(f);
+  }
 }
 
 /*----EXPRESSION TREE DATA STRUCTURE----*/
 
 void freeTree(NODE *root) {
-  if (root->lChild != NULL)
-    freeTree(root->lChild);
-  if (root->rChild != NULL)
-    freeTree(root->rChild);
+  if (root) {
+    if (root->lChild != NULL)
+      freeTree(root->lChild);
+    if (root->rChild != NULL)
+      freeTree(root->rChild);
 
-  free(root->val);
-  free(root);
+    free(root->val);
+    free(root);
+  }
 }
 
 NODE *create_expression_tree(char *postfix) {
@@ -82,7 +112,8 @@ NODE *create_expression_tree(char *postfix) {
     // if element is an operator: pop() = right_child, pop() = left_child. push
     // current node
     Bool isFunc = isStrOpr(token);
-    if (isFunc || ((isOperator(token[0])) && !(isnegative(token)))) {
+    if (isFunc || ((isOperator(token[0])) &&
+                   !(isnegative(token)))) { // '-' is sepcial case
       if (peek(stack) != NULL) {
         node->rChild = pop(stack);
 
@@ -100,7 +131,8 @@ NODE *create_expression_tree(char *postfix) {
 
     token = strtok(NULL, " ");
   }
-
+  
+  
   NODE *root = pop(stack);
   freeStack(stack);
 
@@ -129,7 +161,7 @@ void rprinttree(NODE *node, char *padding, char *pointer) {
   }
 }
 
-double evaluate_tree(NODE *node, double x) {
+double evaluate_tree(NODE *node, const double x) {
 
   double result = 0.0f;
   if (node != NULL) {
@@ -159,8 +191,8 @@ double evaluate_tree(NODE *node, double x) {
     result = eval(A, B, node->val, stropr, &err);
     if (err) {
       if (!stropr) {
-        printf("An error occured evaluating: '%s %s %s'\n", (char *)node->lChild,
-               (char *)node->val, (char *)node->rChild);
+        printf("An error occured evaluating: '%s %s %s'\n",
+               (char *)node->lChild, (char *)node->val, (char *)node->rChild);
       } else {
         printf("An error occured evaluating: %s %s\n", (char *)node->val,
                (char *)node->rChild);
@@ -241,8 +273,10 @@ NODE *create_node(void *val, node_datatype type) {
 }
 
 void free_node(NODE *node) {
-  free(node->val);
-  free(node);
+  if (node) {
+    free(node->val);
+    free(node);
+  }
 }
 
 /*
@@ -259,17 +293,19 @@ Stack *create_stack(node_datatype type) {
 }
 
 void freeStack(Stack *stack) {
-  NODE *node = stack->top;
-  NODE *pnode = NULL;
+  if (stack) {
+    NODE *node = stack->top;
+    NODE *pnode = NULL;
 
-  while (node) {
-    pnode = node;
-    node = node->next;
+    while (node) {
+      pnode = node;
+      node = node->next;
 
-    free_node(pnode);
+      free_node(pnode);
+    }
+
+    free(stack);
   }
-
-  free(stack);
 }
 
 // debug
@@ -339,20 +375,20 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
   by adding '5' to the postfix expression, replacing it with '*' and skipping
   the iteration
   */
-  char* local_expr = malloc(strlen(expr) + 1);
+  char *local_expr = malloc(strlen(expr) + 1);
   if (local_expr == NULL) {
     printf("failed to allocated `local_expr`");
-    return -999;
+    return 1;
   }
   if ((int)strlen(expr) + 1 > buffersize) {
     printf("buffersize must be >= %d (strlen(expr)+1)",
            (int)(strlen(expr) + 1));
-    return -999;
+    return 1;
   }
-  strcpy(local_expr, expr); 
+  strcpy(local_expr, expr);
 
   /* variable setup*/
-  int errcode = 0;     // 0 : success, -999 : error
+  int errcode = 0;     // 0 : success, 1 : error
   strcpy(postfix, ""); // make sure passed output string empty
   Stack *stack = create_stack(STRING_TYPE);
 
@@ -366,9 +402,8 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
   Bool isOperand; // is an operand in general
   Expr_Token prev_token = NONE;
   char ch;
-  int i = 0; 
- 
-  while ( local_expr[i] != STREND && !errcode) {
+  int i = 0;
+  while (local_expr[i] != STREND && !errcode) {
     ch = local_expr[i];
     isFunc = False;
     isConst = False;
@@ -423,7 +458,7 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
         if (currstrlen == 50) {
           printf("ERROR: operator invalid (overflow over 50 char): %s\n",
                  currStr);
-          errcode = -999;
+          errcode = 1;
           break;
         }
         appendChar(currStr, local_expr[i], currstrlen); // append character
@@ -439,12 +474,13 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
     // is operator +, -, /, *, ^ or sin cos ..etc
     if (((!isOperand) && (isOperator(ch))) || isFunc) {
       if (!isFunc && (prev_token == OPEN_BRACKET || prev_token == NONE)) {
-        printf("ERR: Cannot have an open bracket then operator: ' ( %c ' \n", ch);
-        errcode = -999;
+        printf("ERR: Cannot have an open bracket then operator: ' ( %c ' \n",
+               ch);
+        errcode = 1;
         break;
       } else if (!isFunc && prev_token == OPERATOR) {
         printf("ERR: Cannot have operator precede an operator: '* *'\n");
-        errcode = -999;
+        errcode = 1;
         break;
       }
       char *peekval = peek(stack);
@@ -485,7 +521,7 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
             strncat(postfix, opr, strlen(opr));
             strncat(postfix, " ", 2);
           } else {
-            errcode = -999;
+            errcode = 1;
             free(opr);
             break;
           }
@@ -510,7 +546,8 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
       // make sure it is a valid function operator or constant
       if (isalpha(currStr[0]) && isalpha(currStr[1]) && !isFunc && !isConst) {
         printf("ERROR: \"%s\" is not a valid operator\n", currStr);
-        errcode = -999;
+        errcode = 1;
+        break;
       }
       // add operand to postfix expression
       else if (!CONCAT_OVERFLOW(postfix, currStr, buffersize)) {
@@ -526,8 +563,10 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
           prev_token = OPERAND;
           continue;
         }
-      } else
-        errcode = -999;
+      } else {
+        errcode = 1;
+        break;
+      }
 
       prev_token = OPERAND;
     }
@@ -540,14 +579,14 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
         tmp[0] = ch;
         tmp[1] = STREND;
         push(stack, tmp);
-        prev_token = OPEN_BRACKET; 
+        prev_token = OPEN_BRACKET;
       }
 
       else {
-        if(prev_token == OPERATOR){
-          printf("ERROR: Cannot have operator then close bracket: e.g.' * )\n"); 
-          errcode = -999;
-          break; 
+        if (prev_token == OPERATOR) {
+          printf("ERROR: Cannot have operator then close bracket: e.g.' * )\n");
+          errcode = 1;
+          break;
         }
         // pop and output until '(' is encountered
         while (stack->top != NULL && ((char *)peek(stack))[0] != '(') {
@@ -557,7 +596,7 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
             strncat(postfix, opr, strlen(opr));
             strncat(postfix, " ", 2);
           } else {
-            errcode = -999;
+            errcode = 1;
             free(opr);
             break;
           }
@@ -568,7 +607,7 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
         // Bracket error
         if (peekval == NULL || (peekval[0] != '(')) {
           printf("ERROR: MISMATCHED BRACKETS\n");
-          errcode = -999;
+          errcode = 1;
           break;
         }
 
@@ -583,7 +622,7 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
             strncat(postfix, opr, strlen(opr));
             strncat(postfix, " ", 2);
           } else {
-            errcode = -999;
+            errcode = 1;
             free(opr);
             break;
           }
@@ -597,9 +636,9 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
           local_expr[i] = '*';
           prev_token = CLOSED_BRACKET;
           continue;
-      }
-        
-        prev_token = CLOSED_BRACKET; 
+        }
+
+        prev_token = CLOSED_BRACKET;
       }
     }
 
@@ -612,7 +651,7 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
     // err invalid character
     else {
       printf("ERROR: Invalid character: '%c'. ASCII: '%d'\n", ch, ch);
-      errcode = -999;
+      errcode = 1;
       break;
     }
     i++;
@@ -623,7 +662,7 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
 
     if (opr[0] == '(') {
       printf("ERROR: MISMATCHED BRACKETS\n");
-      errcode = -999;
+      errcode = 1;
       free(opr);
       break;
     }
@@ -637,7 +676,7 @@ int infix_to_postfix(char *expr, char *postfix, int buffersize) {
   freeStack(stack);
   free(local_expr);
 
-  if (errcode == -999)
+  if (errcode == 1)
     postfix = NULL;
 
   return errcode;
@@ -711,23 +750,26 @@ int cmpopr(char opr1, char opr2) {
   return cmp;
 }
 
-/* MISC MATH FUNCTIONS */ 
+/* MISC MATH FUNCTIONS */
 Bool double_equal(double a, double b) {
-  double epsilon = 1e-9;   
+  double epsilon = 1e-9;
   return fabs(a - b) < epsilon;
 }
 
-double linear_interpolation_x(double x1, double y1, double x2, double y2, double yPrime){
+double linear_interpolation_x(double x1, double y1, double x2, double y2,
+                              double yPrime) {
 
-  if(double_equal(y1, y2)){
-    printf("MATH ERR: Cannot linearly interpolate X value from line y = %.2f\n", y1); return INFINITY;  
+  if (double_equal(y1, y2)) {
+    printf("MATH ERR: Cannot linearly interpolate X value from line y = %.2f\n",
+           y1);
+    return INFINITY;
   }
 
-  else if(double_equal(x1, x2)){
-    return x1; 
+  else if (double_equal(x1, x2)) {
+    return x1;
   }
 
-  double result = (yPrime - y1)* (x2-x1)/(y2-y1) + x1; 
+  double result = (yPrime - y1) * (x2 - x1) / (y2 - y1) + x1;
 
-  return result; 
+  return result;
 }

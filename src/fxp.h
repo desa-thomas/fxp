@@ -15,16 +15,19 @@ MACROS
 ------
 */
 
-#define isOperator(expr) expr == '+' || expr == '-' || expr == '*' || expr == '/' || expr == '^'
-#define isBracket(expr) expr == '(' || expr == ')' || expr == '[' || expr == ']'
+#define isOperator(expr) (expr == '+' || expr == '-' || expr == '*' || expr == '/' || expr == '^')
+#define isBracket(expr) (expr == '(' || expr == ')' || expr == '[' || expr == ']')
 #define len(arr) (int)(sizeof(arr)/sizeof(arr[0]))
 
 #define appendChar(str, ch, len) str[len] = ch; str[len+1] = STREND
+
 #define char2str(str, ch) str[0] = ch; str[1] = STREND
 
 #define imax(a, b) (int) a > (int) b ? a : b
 
-#define isnegative(str) str[0] == '-' && str[1] != '\0' && isdigit(str[1])
+#define isnegative(str) (str[0] == '-' && str[1] != '\0' && isdigit(str[1])) 
+
+#define evaluate_f(fox, x) evaluate_tree(fox->exprTree, x); 
 
 /*
 -----
@@ -92,10 +95,10 @@ create a FOX struct from a string (math) expression.
 NOTE: 
     can only create a FOX struct from expressions with a single variable 'x',
     multivariate functions or functions of another variable are not currently supported
-
 Usage:  
     FOX* f = initfunc("3sin(x) + 5"); 
 */
+
 FOX* initfunc(char* expr); 
 void freeFox(FOX* f); 
 /* 
