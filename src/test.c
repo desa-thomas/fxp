@@ -20,7 +20,7 @@ const double vals[] = {1.0, 5.0, 10.0, 6.78, -8};
 
 int main() {
   
-  FOX* f = initfunc("-x^2");
+  FOX* f = initfunc("-10x^2 + 5");
   if(f){
     printTree(f->exprTree);
   }

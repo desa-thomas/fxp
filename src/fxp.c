@@ -39,7 +39,7 @@ FOX *initfunc(char *expr) {
     for clariy
     */
     
-    char cpy[strlen(postfix)]; 
+    char cpy[strlen(postfix) + 1]; 
     memset(cpy, 0, sizeof(cpy));
     strcpy(cpy, postfix); 
 
