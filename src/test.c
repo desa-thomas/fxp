@@ -1,4 +1,5 @@
 #include "fxp.h"
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -8,6 +9,8 @@ void test_tree();
 void test_list_exprs(char *exprs[], int len);
 void test_evaluating();
 void test_fox();
+void test_interpolate();
+void interactive_fox_test(); 
 
 char *exprs[] = {"(++ 3)", "56 (( 89 -", "(3 + ) + 4", "sin sin sin x"};
 char *more_exprs[] = {
@@ -16,8 +19,13 @@ char *more_exprs[] = {
 const double vals[] = {1.0, 5.0, 10.0, 6.78, -8};
 
 int main() {
-
-  test_fox(); 
+  
+  FOX* f = initfunc("-x^2");
+  if(f){
+    printTree(f->exprTree);
+  }
+  interactive_fox_test();
+  freeFox(f); 
 }
 
 /*
@@ -119,9 +127,8 @@ void test_list_exprs(char *exprs[], int len) {
         }
 
         freeTree(root);
-      }
-      else {
-        printf("Root is NONE\n"); 
+      } else {
+        printf("Root is NONE\n");
       }
     } else {
       printf("Failed to parse infix expression\n");
@@ -144,5 +151,54 @@ void test_fox() {
       }
       freeFox(f);
     }
+  }
+  for (int i = 0; i < len(more_exprs); i++) {
+    printf("-----------------------------------\n");
+    printf("expression: %s\n", more_exprs[i]);
+
+    FOX *f = initfunc(more_exprs[i]);
+
+    if (f) {
+      for (int j = 0; j < len(vals); j++) {
+        double res = evaluate_f(f, vals[j]);
+        printf("f(%.2f) = %.2f\n", vals[j], res);
+      }
+      freeFox(f);
+    }
+  }
+}
+
+void test_interpolate() {
+  double xprime = linear_interpolation_x(0, 0, 0, 0, 1);
+
+  if (xprime == INFINITY) {
+    printf("is inf");
+  }
+}
+
+void interactive_fox_test() {
+  char expr[500] = {0};
+  printf("expr: ");
+  scanf("%[^\n]", expr);
+
+  while (strcmp(expr, "quit") != 0) {
+
+    FOX *f = initfunc(expr);
+
+    if (f) {
+      double x = 0.0;
+
+        printf("x =  ");
+        if (scanf("%lf", &x) == 1) {
+          const double y = evaluate_f(f, x);
+          printf("f(%.2f) = %.2f\n", x, y);
+        }
+    }
+    else{
+      printf("An err occurd\n");
+    }
+
+    printf("expr: ");
+    scanf("%[^\n]", expr);
   }
 }

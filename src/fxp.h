@@ -186,6 +186,7 @@ double eval(double A, double B, char* operation, Bool is_stropr, Bool* err);
 
 /*
  * Linearly interpolate x coordinate between two points.
+ * Usage: const double xprime = linear_interpolation_x()
  *
  * |  *  (x1, y1)
  * |
@@ -197,3 +198,4 @@ double eval(double A, double B, char* operation, Bool is_stropr, Bool* err);
  */ 
 double linear_interpolation_x(double x1, double y1, double x2, double y2, double yPrime);
 
+Bool double_equal(double a, double b); 
