@@ -20,7 +20,7 @@ const double vals[] = {1.0, 5.0, 10.0, 6.78, -8};
 
 int main() {
   
-  FOX* f = initfunc("-10x^2 + 5");
+  FOX* f = initfunc("sqrt(x)");
   if(f){
     printTree(f->exprTree);
   }
@@ -181,7 +181,6 @@ void interactive_fox_test() {
   printf("expr: ");
   scanf("%[^\n]", expr);
 
-  while (strcmp(expr, "quit") != 0) {
 
     FOX *f = initfunc(expr);
 
@@ -198,7 +197,4 @@ void interactive_fox_test() {
       printf("An err occurd\n");
     }
 
-    printf("expr: ");
-    scanf("%[^\n]", expr);
-  }
 }
